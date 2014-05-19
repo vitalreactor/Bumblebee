@@ -1,4 +1,4 @@
-(ns api-query.impl
+(ns bumblebee.impl
   (:require [clojure.data.json :as json]
             [clojure.walk :as walk])
   (:import (clojure.lang IPersistentCollection IPersistentVector IPersistentMap)

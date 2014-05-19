@@ -1,4 +1,4 @@
-(ns api-query.test-json)
+(ns bumblebee.test-json)
 
 (def test-payload
   [{:type "observation"

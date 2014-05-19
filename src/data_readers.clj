@@ -1,3 +1,3 @@
-{api-query/jsonpath api-query.impl/read-json-path
- api-query/aggregator api-query.impl/read-aggregator
- api-query/tlambda api-query.impl/read-tuple-lambda}
+{bumblebee/jsonpath bumblebee.impl/read-json-path
+ bumblebee/aggregator bumblebee.impl/read-aggregator
+ bumblebee/tlambda bumblebee.impl/read-tuple-lambda}
