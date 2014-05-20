@@ -59,10 +59,28 @@
   [source]
   (create-json-path source))
 
+(defn mean
+  [values]
+  (/ (apply + values) (count values)))
+
+(defn variance
+  [values]
+  (let [value-mean (mean values)]
+    (->> values
+         (map (comp #(Math/pow % 2) #(- value-mean %)))
+         mean)))
+
+(defn standard-deviation
+  [values]
+  (Math/pow (variance values) 1/2))
+
 (defn aggregate-values
   [agg values]
   (case agg
-    :avg (long (/ (apply + values) (count values)))))
+    :avg (long (mean values))
+    :sum (apply + values)
+    :count (count values)
+    :stddev (standard-deviation values)))
 
 (deftype PositionalAggregator [agg pos]
   Aggregator
