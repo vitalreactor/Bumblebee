@@ -1,14 +1,18 @@
 (ns bumblebee.impl
   (:require [clojure.data.json :as json]
             [clojure.walk :as walk])
-  (:import (clojure.lang IPersistentCollection IPersistentVector IPersistentMap)
-           (com.jayway.jsonpath JsonPath Filter)))
+  (:import  (clojure.lang IPersistentCollection IPersistentVector IPersistentMap IFn IDeref)
+           (com.jayway.jsonpath JsonPath Filter)
+           (java.util Calendar TimeZone)))
 
 (defprotocol Isolatable
   (isolate [blob patterns] "Generate a seq of n-tuples by isolating patterns from blob."))
 
 (defprotocol Groupable
   (group [tuples expr] "Subdivide a seq of n-tuples by evaling expr against each."))
+
+(defprotocol GroupingExpr
+  (group-for [expr names tuple] "Return a value to group tuple with other tuples in."))
 
 (defprotocol Aggregator
   (aggregate-tuples [aggregator tuples] "Aggregate n-tuples by fn."))
@@ -132,6 +136,10 @@
                (when-not (every? nil? value-names)
                  {::names value-names}))))))
 
+(extend-protocol GroupingExpr
+  IFn
+  (group-for [f names tuple] (f names tuple)))
+
 (extend-protocol Groupable
   IPersistentCollection
   (group [tuples expr]
@@ -139,7 +147,7 @@
           name-mapping (if-let [names (::names tuple-meta)]
                          (into {} (map-indexed (comp vec reverse list) names))
                          {})
-          groupings (group-by (partial expr name-mapping) tuples)]
+          groupings (group-by (partial group-for expr name-mapping) tuples)]
       (with-meta (into {} (for [[group tuples] groupings] [group (with-meta tuples tuple-meta)]))
         {::grouped-tuples true
          ::expr expr}))))
@@ -154,3 +162,51 @@
           (for [[k v] data]
             [k (aggregate-tuples agg v)]))))
 
+(def ^:private time-scale-fields
+  {:millisecond []
+   :second [Calendar/MILLISECOND]
+   :minute [Calendar/SECOND Calendar/MILLISECOND]
+   :hour [Calendar/MINUTE Calendar/SECOND Calendar/MILLISECOND]
+   :day [Calendar/HOUR_OF_DAY Calendar/MINUTE Calendar/SECOND Calendar/MILLISECOND]
+   :week [Calendar/DAY_OF_WEEK Calendar/HOUR_OF_DAY Calendar/MINUTE Calendar/SECOND Calendar/MILLISECOND]
+   :month [Calendar/DAY_OF_MONTH Calendar/HOUR_OF_DAY Calendar/MINUTE Calendar/SECOND Calendar/MILLISECOND]
+   :year [Calendar/MONTH Calendar/DAY_OF_MONTH Calendar/HOUR_OF_DAY Calendar/MINUTE Calendar/SECOND Calendar/MILLISECOND]})
+
+(def ^:private dow-trans
+  {:sunday Calendar/SUNDAY
+   :monday Calendar/MONDAY
+   :tuesday Calendar/TUESDAY
+   :wednesday Calendar/WEDNESDAY
+   :thursday Calendar/THURSDAY
+   :friday Calendar/FRIDAY
+   :saturday Calendar/SATURDAY})
+
+(deftype TimeSeriesGroupingExpr
+    [ordinal stem tz_offset zero_fields start]
+  GroupingExpr
+  (group-for [this names tuple]
+    (let [element-fn (if ordinal
+                       (fn element-fn [names tuple] (nth tuple ordinal))
+                       (fn element-fn [names tuple] (nth tuple (get names (symbol stem)))))
+          tz (TimeZone/getTimeZone (str "GMT" (when-not (< 0 tz_offset)
+                                                "+")
+                                        tz_offset))
+          time (element-fn names tuple)
+          calendar (Calendar/getInstance tz)]
+    (.setFirstDayOfWeek calendar (dow-trans start))
+    (.setTimeInMillis calendar time)
+      (doseq [field zero_fields]
+        (.set calendar field (.getMinimum calendar field)))
+      (.getTime calendar))))
+
+(defn read-time-series-grouping-fn
+  [{:keys [element resolution tz-offset start]
+    :or {tz-offset 0
+         start :sunday}
+    :as m}]
+  (let [stem (.substring (name element) 1)
+        ordinal (when (re-matches #"\d{1,2}" stem)
+                  (Integer/parseInt stem))
+        zero-fields (time-scale-fields resolution)]
+
+    (TimeSeriesGroupingExpr. ordinal stem tz-offset zero-fields start)))

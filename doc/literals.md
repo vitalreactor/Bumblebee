@@ -37,7 +37,21 @@ Supported aggregation functions include:
 
 ## bumblebee/timeseries
 
-    #bumblebee/timeseries {:element %<number or symbol>
-                           :resolution <one of #{:millisecond :second :minute :hour :day :week :month :year}>
-	                   [:tz-offset <-12 - 12>]
-	                   [:start <one of #{:monday :sunday}>]}
+```clojure
+#bumblebee/timeseries {:element %<number or symbol>
+                                           :resolution <one of #{:millisecond :second :minute :hour :day :week :month :year}>
+                                           [:tz-offset <-12 - 12>]
+                                           [:start <one of #{:monday :sunday}>]}
+```
+
+Creates a grouping function which will group the data by time.
+
+Element specifies which part of the tuple describes a time value.
+
+Resolution specifies at which granularity the timestamps should be grouped.
+
+Tz-offset specifies an offset from UTC that :hour - :year should be
+calculated in. Defaults to 0 if omitted.
+
+Start specifies if weeks should start on a Monday or Sunday. Defaults
+to Sunday if omitted.
