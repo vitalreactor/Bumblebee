@@ -18,7 +18,7 @@
        (fact "it groups data by expr, returning a map of expr -> tuple"
              (-> tj/test-payload
                  (isolate [#bumblebee/jsonpath "$.date" #bumblebee/jsonpath "$.value"])
-                 (group #bumblebee/tlambda (long (/ %0 86400000)))) =>
+                 (group #bumblebee/tlambda (long (/ %1 86400000)))) =>
                  {16184 [[1398358339110 179] [1398368339110 182] [1398378339110 147]]
                   16185 [[1398388339110 168] [1398398339110 174]]})
        (fact "the grouping fn can accept named elements of the tuple"
@@ -30,12 +30,12 @@
        (fact "it generates metadata on the returned map"
              (-> tj/test-payload
                  (isolate [#bumblebee/jsonpath "$.date" #bumblebee/jsonpath "$.value"])
-                 (group #bumblebee/tlambda (long (/ %0 86400000)))) =>
+                 (group #bumblebee/tlambda (long (/ %1 86400000)))) =>
                  (comp ::impl/grouped-tuples meta))
        (fact "it preserves the metadata of each underlying collection of tuples"
              (-> tj/test-payload
                  (isolate [#bumblebee/jsonpath "$.date" #bumblebee/jsonpath "$.value"])
-                 (group #bumblebee/tlambda (long (/ %0 86400000)))) =>
+                 (group #bumblebee/tlambda (long (/ %1 86400000)))) =>
                  (partial every? #(-> % (nth 1) meta ::impl/isolated-tuples))))
 
 (facts "about time grouping"
@@ -75,14 +75,14 @@
              (-> tj/test-payload
                  (isolate [#bumblebee/jsonpath "$.date"
                            #bumblebee/jsonpath "$.value"])
-                 (aggregate #bumblebee/aggregator [:avg %1]))
+                 (aggregate #bumblebee/aggregator [:avg %2]))
              => 170)
        (fact "it aggregates grouped data, returning a single value per group"
              (-> tj/test-payload
                  (isolate [#bumblebee/jsonpath "$.date"
                            #bumblebee/jsonpath "$.value"])
-                 (group #bumblebee/tlambda (long (/ %0 86400000)))
-                 (aggregate #bumblebee/aggregator [:avg %1]))
+                 (group #bumblebee/tlambda (long (/ %1 86400000)))
+                 (aggregate #bumblebee/aggregator [:avg %2]))
              => {16184 169
                  16185 171})
        (fact "it aggregates grouped data, returning a single value per group using names"

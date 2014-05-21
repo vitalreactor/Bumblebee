@@ -85,7 +85,7 @@
 (deftype PositionalAggregator [agg pos]
   Aggregator
   (aggregate-tuples [this tuples]
-    (let [vs (map #(nth % pos) tuples)]
+    (let [vs (map #(nth % (dec pos)) tuples)]
       (aggregate-values agg vs))))
 
 (defn get-named-element
@@ -136,7 +136,7 @@
         replacements (into {}
                            (for [m (vals arg-ana)]
                              (let [replacement (case (:type m)
-                                                 :numeric `(nth ~tuple-sym ~(:ordinal m))
+                                                 :numeric `(nth ~tuple-sym ~(dec (:ordinal m)))
                                                  :named `(nth ~tuple-sym (get ~names-sym (quote ~(symbol (:name m))))))]
                                [(:anchor m) replacement])))
         body (walk/postwalk-replace replacements l)]
@@ -204,7 +204,7 @@
   GroupingExpr
   (group-for [this names tuple]
     (let [element-fn (if ordinal
-                       (fn element-fn [names tuple] (nth tuple ordinal))
+                       (fn element-fn [names tuple] (nth tuple (dec ordinal)))
                        (fn element-fn [names tuple] (nth tuple (get names (symbol stem)))))
           tz (TimeZone/getTimeZone (str "GMT" (when-not (< 0 tz_offset)
                                                 "+")
