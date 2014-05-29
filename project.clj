@@ -1,4 +1,4 @@
-(defproject com.vitalreactory/bumblebee "0.1.0-SNAPSHOT"
+(defproject com.vitalreactor/bumblebee "0.1.0-SNAPSHOT"
   :description "Tools for applying time-series based queries to API results"
   :url "http://github.com/vitalreactor/bumblebee"
   :license {:name "MIT License"
