@@ -5,7 +5,12 @@
             :url ""}
   :dependencies [[org.clojure/clojure "1.6.0"]
                  [com.jayway.jsonpath/json-path "0.9.1"]
-                 [org.clojure/data.json "0.2.4"]]
+                 [org.clojure/data.json "0.2.4"]
+                 [javax.xml.xquery/xqj-api "1.0"]
+                 [io.zorba/zorba-xqj "3.0.0"]
+                 [io.zorba/zorba-api "3.0.0"]]
+  :repositories [["xqj.net" "http://xqj.net/maven"]]
   :aliases {"test" "midje"}
   :profiles {:dev {:dependencies [[midje "1.6.3"]]
-                   :plugins [[lein-midje "3.1.1"]]}})
+                   :plugins [[lein-midje "3.1.1"]]}}
+  :jvm-opts ["-Djava.library.path=/opt/local/share/java/"])
